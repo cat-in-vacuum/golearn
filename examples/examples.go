@@ -2,7 +2,15 @@ package examples
 
 import (
 	"fmt"
+	"go/ast"
+	"go/doc"
+	"go/parser"
+	"go/token"
+	"log"
+	"path/filepath"
+	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 	"unsafe"
@@ -26,12 +34,14 @@ func concatenate(strs ...string) string {
 var isTraceEnabled = true
 
 func Run() {
+	//strings
+	//aboutStrings()
+	//const
+	//constExample()
 	// Про массивы
 	//aboutArrays()
-
 	// Про слайсы
 	//aboutSlices()
-
 	// Про мапы
 	aboutMaps()
 
@@ -39,6 +49,67 @@ func Run() {
 	//aboutMutex()
 }
 
+func aboutStrings() {
+	s := "simple strings"
+	subS := s[:5]
+
+	// хранение строк:
+	// строки не изменяемы, копирование или получение подстроки Б из строки А
+	// очень дешево, т.к скопированная строка или подстрока будут ссылаться на ту же память
+	// что и исходная строка(не будет выделяться новая).
+	// В примере s:=s := "simple strings", subS := s[:5]
+	// fmt.Printf(s, subS,) -> |%s|; |%s|, subS будет ссылаться на первый символ строки s длинной 5
+
+	fmt.Println(s, subS, )
+
+	// Детали устройства строк:
+	// Сама строка это неизменяемый набор байт
+	// Для подсчета кол-ва рун, а не символов байт,
+	// лучше использовать utf8.RuneCountInString(s), т.к. некоторые руны могут состоять из нескольких байт.
+	// При итерации по строке при помощи range происходит неявное декодирование к UTF-8
+	// по этому итарция будет происходить именно по рунам, а на по байтам. Пример итерации по "Hello, 世界"
+
+	for i, r := range "Hello, 世界" {
+		fmt.Printf("%d\t%q\t%d\n", i, r, r)
+	}
+
+	// еще пример итерации по строке:
+
+	var str = "123abcэюя!?"
+	fmt.Println("|type|value")
+	for i, char := range str {
+		fmt.Printf("str char - byte:%d; type:%T; value:%q\n", char, char, char)
+		fmt.Printf("str[i]   - byte:%d; type:%T; value:%q\n", str[i], str[i], str[i])
+	}
+}
+
+func constExample() {
+	const num = 3
+
+	//Константы:
+	//Есть два типа констант - типизированные и нетипизированные. Воторые предоставляют большую точность в случае чисел, т.к.
+	//могут быть использованны в большем кол-ве вычеслений без  преобразований.
+	//В примере ниже
+	//const num = 3
+	//  можно присвоить всем численным типам:
+
+	var f32 float32
+	var f64 float64
+	var i int
+	var r rune
+	f32 = num
+	f64 = num
+	i = num
+	r = num
+	// Имеется шесть вариантов таких несвязанных констант,
+	// именуемых нетипизированиым булевым значением, нетипизированным целым числом, нетипизированной руной,
+	// нетипизированным числом с плавающей точкой, нетипизированным комплексным числом и нетипизированной строкой
+
+	fmt.Printf("var: %f|%T; const: %d||%T\n", f32, f32, num, num)
+	fmt.Printf("var: %f|%T; const: %d||%T\n", f64, f64, num, num)
+	fmt.Printf("var: %d|%T; const: %d||%T\n", i, i, num, num)
+	fmt.Printf("var: %d|%T; const: %d||%T - и даже руне:)\n", r, r, num, num)
+}
 
 func aboutArrays() {
 	fmt.Println("\n *** \n -------------- arrays ------------------\n *** \n")
@@ -254,16 +325,29 @@ func aboutSlices() {
 	printSliceString(&x)
 }
 
+// blablabla
 func aboutMaps() {
+	printLineTrace()
 	// мапа - это ссылка на хеш таблицу
 	// ключи, как и значения должны иметь одинаковый тип данных
 	// но тип данных  ключа может быть не равен типу значения
 	// ключ должен быть сравниваемым значением
 	m := map[string]string{
-		"key1": "value1",
+		"cat":   "meow",
+		"cat_1": "meow_1",
 	}
 
 	printMapStringString(m)
+
+	printLineTrace()
+	// это все равно, что
+	mm := make(map[string]string)
+
+	mm["cat"] = "meow"
+	mm["cat_1"] = "meow_1"
+
+	printMapStringString(mm)
+
 }
 
 func aboutMutex() {
@@ -467,8 +551,53 @@ func printSliceString(s *[]string) {
 	fmt.Printf("Len: %d | cap: %d | pointer: %p | elements: %+v\n", len(*s), cap(*s), s, s)
 }
 
-func printMapStringString(m map[string]string){
-	fmt.Printf("len: %d; value: %+v;", len(m))
+func printMapStringString(m map[string]string) {
+	fmt.Printf("len: %d; value: %+v\n", len(m), m)
+}
+
+
+
+
+
+
+
+// TODO разобраться, как печатать комменты выше вызываемой ф-ции
+func FuncPathAndName(f interface{}) string {
+	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
+}
+
+func FuncName(f interface{}) string {
+	splitFuncName := strings.Split(FuncPathAndName(f), ".")
+	return splitFuncName[len(splitFuncName)-1]
+}
+
+// Get description of a func
+func FuncDescription(f interface{}) string {
+	fileName, _ := runtime.FuncForPC(reflect.ValueOf(f).Pointer()).FileLine(0)
+	funcName := FuncName(f)
+	fset := token.NewFileSet()
+
+	// Parse src
+	parsedAst, err := parser.ParseFile(fset, fileName, nil, parser.ParseComments)
+	if err != nil {
+		log.Fatal(err)
+		return ""
+	}
+
+	pkg := &ast.Package{
+		Name:  "Any",
+		Files: make(map[string]*ast.File),
+	}
+	pkg.Files[fileName] = parsedAst
+
+	importPath, _ := filepath.Abs("/")
+	myDoc := doc.New(pkg, importPath, doc.AllDecls)
+	for _, theFunc := range myDoc.Funcs {
+		if theFunc.Name == funcName {
+			return theFunc.Doc
+		}
+	}
+	return ""
 }
 
 func printLineTrace() {

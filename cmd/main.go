@@ -1,10 +1,7 @@
 package main
 
 import (
-	"github.com/cat-in-vacuum/golearn/expserv"
-	"github.com/rs/zerolog/log"
-	"net"
-	"time"
+	"github.com/cat-in-vacuum/golearn/examples"
 )
 
 var isTraceEnabled = true
@@ -13,12 +10,11 @@ type T struct {
 	S string
 }
 
-
 func main() {
 
 
 
-	go func() {
+	/*go func() {
 		time.Sleep(time.Second * 1)
 		conn, err := net.Dial("tcp", "localhost:8080")
 		if err != nil {
@@ -28,10 +24,11 @@ func main() {
 			log.Debug().Err(err).Msg("conn failure")
 			conn.Write([]byte("ok"))
 		}
-	}()
+	}()*/
 
-	expserv.Run()
+	//expserv.Run()
 
 	// go examples.Run()
-	//examples.Run()
+	examples.Run()
 }
+
