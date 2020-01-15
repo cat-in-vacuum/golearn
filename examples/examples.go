@@ -555,12 +555,6 @@ func printMapStringString(m map[string]string) {
 	fmt.Printf("len: %d; value: %+v\n", len(m), m)
 }
 
-
-
-
-
-
-
 // TODO разобраться, как печатать комменты выше вызываемой ф-ции
 func FuncPathAndName(f interface{}) string {
 	return runtime.FuncForPC(reflect.ValueOf(f).Pointer()).Name()
