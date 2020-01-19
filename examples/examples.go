@@ -359,6 +359,111 @@ type CatInVacuum struct {
 	Speed int
 }
 
+func aboutFuncAndGoroutines() {
+	printLineTrace()
+	// функции ялвяются значениями первого класса:
+	// т.е. функция может иметь тип, может быть присвоенна в переменную
+	// возвращенна из другой ф-ции и т.д.
+	type wrapStringOutFunc func(func (string), string) func()
+
+	var wrapFunc wrapStringOutFunc
+	wrapFunc = func(printString func(string), s string) func() {
+		return func() {
+			fmt.Println("-------")
+			printString(s)
+			fmt.Println("-------")
+		}
+	}
+
+	printString := func(s string) {
+		fmt.Println(s)
+	}
+
+	wrapped := wrapFunc(printString, "i am cat")
+	wrapped()
+
+	printLineTrace()
+	// функцию можно сравнивать с нил, но нельзя сравнивать между собой
+	// по этому нельзя использовать как ключ для мап
+	clearF :=func(){}
+	var nilFunc wrapStringOutFunc
+
+	fmt.Println(wrapped == nil, "ф-ция проинизиализированна" )
+	fmt.Println(clearF == nil, "ф-ция, которая делает ничего")
+	fmt.Println(nilFunc == nil, "ф-ция объявлена, но инициализированна")
+
+	printLineTrace()
+	// ф-ция может быть анонимной
+	// соответсвенно можно делать замыкания:
+	clojure := func() func() int {
+		var count int
+		return func() int {
+			count++
+			return count
+		}
+	}
+	// если ты у меня спросишь
+	// - братишка, а как так получаестя, что переменная запомниает свое состояние?
+	// то я тебе отвечу:
+	// - бро, потому что анониманая ф-ция все еще ссылается на перемнную,
+	//   соответственно, сборщик мусора, такого, как ты, её не удаляет.
+	//   Просто потому что на переменную ссылается всратая анонимная ф-ция.
+	counter := clojure()
+	fmt.Println(counter())
+	fmt.Println(counter())
+	fmt.Println(counter())
+	// todo захват перменных
+}
+
+type Location struct {
+	Vacuum string
+}
+type Cat struct {
+	Legs int
+	Name string
+	In   Location
+}
+
+func aboutStructs() {
+	printLineTrace()
+	// лучше объявлять эксземпляр структуры, явно указывая поля, т.к. нет необходимости
+	// запоминать их порядок, что чревато ошибками
+	cat := Cat{
+		Legs: 6,
+		Name: "Unnamed",
+		In: Location{
+			Vacuum: "room`s vacuum",
+		},
+	}
+	printStruct(cat)
+
+	printLineTrace()
+	// все приведенные ниже записи эквивалентны
+	initCat := new(Cat)
+	initCat = &Cat{}
+	*initCat = Cat{}
+	// для модификации, всегда нужно передавать по указателю
+	// т.к. при передече ф-ция всегда получает только копию
+	modifyCatName("Koluchka", &cat)
+	printStruct(cat)
+
+	printLineTrace()
+	// сравнить структуры можно только если все её поля сравниваемы
+	otherCat := Cat{
+		Legs: 8,
+		Name: "Cookies",
+		In:Location{
+			Vacuum: "kitchen vacuum",
+		},
+	}
+	fmt.Println(otherCat == cat)
+}
+
+func modifyCatName(name string, cat *Cat) {
+	cat.Name = name
+}
+
+
 func (c CatInVacuum) Meow() {
 	printLineTrace()
 	fmt.Printf("I am %s, meow!\n", c.Name)
@@ -382,6 +487,7 @@ func aboutInterfaces() {
 		Meow()
 	}
 
+	// описывает нечто ходящее
 	type Walker interface {
 		Walk()
 	}
@@ -416,6 +522,8 @@ func aboutInterfaces() {
 	letWalk(cInV)
 
 	printLineTrace()
+
+	// объявим нулевой интерфейс типа io.Writter
 	// нулевое значение интерфейса - nil
 	var w io.Writer
 	fmt.Println(w)
@@ -424,9 +532,7 @@ func aboutInterfaces() {
 	// в своей концепции интерфейс состоит из дескриптора типа
 	// и самого значения этого типа
 	// называются они динамический тип  и динамическое значение типа
-
-	// зареберем это:
-	// объявим нулевой интерфейс типа io.Writter
+	// разберем это:
 
 	//  на этом этапе тип и значение будут равны nil
 	// Вызов метода нулевого интерфейса приводит к панике
@@ -451,6 +557,13 @@ func aboutInterfaces() {
 	// т.е. еще раз : динамический тип хранит сам ДЕСКРИПТОР ТИПА указателя на os.File - т.е. некую абстрактную дичь, которая определяет сам тип
 	// а динамическое значение хранит уже саму ПЕРЕМЕННУЮ указателя на os.File
 
+	printLineTrace()
+	// В общем случае, во время компиляции мы не знаем, каким будет динамический тип значния, которое запакованно в интерфейс
+	// по этому в этом случае используется динамическая диспетчеризация.
+	// Вместо непосредственного вызова компилятор генерирует код для получения адреса вызываемого метода, в данном случае Write
+	// После чего осуществляет косвенный вызов этого метода.
+	// Аргументом для вызова становится копия
+	w.Write([]byte("Hello, cat!"))
 
 
 }
@@ -644,9 +757,9 @@ func aboutMutex() {
 	time.Sleep(time.Second * 6)
 }
 
-// todo
-// о стеке вызовов
-// и о функциях
+func printStruct(s interface{}) {
+	fmt.Printf("%+v\n", s)
+}
 
 func printSliceInt(s []int) {
 	fmt.Printf("Len: %d | cap: %d | pointer: %p | elements: %+v\n", len(s), cap(s), &s, s)
