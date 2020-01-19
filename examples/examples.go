@@ -6,7 +6,9 @@ import (
 	"go/doc"
 	"go/parser"
 	"go/token"
+	"io"
 	"log"
+	"os"
 	"path/filepath"
 	"reflect"
 	"runtime"
@@ -34,16 +36,18 @@ func concatenate(strs ...string) string {
 var isTraceEnabled = true
 
 func Run() {
-	//strings
-	//aboutStrings()
-	//const
-	//constExample()
+	// strings
+	// aboutStrings()
+	// const
+	// constExample()
 	// Про массивы
-	//aboutArrays()
+	// aboutArrays()
 	// Про слайсы
-	//aboutSlices()
+	// aboutSlices()
 	// Про мапы
-	aboutMaps()
+	// aboutMaps()
+
+	aboutInterfaces()
 
 	// Параллельность и всовместно используемые переменные
 	//aboutMutex()
@@ -325,8 +329,8 @@ func aboutSlices() {
 	printSliceString(&x)
 }
 
-// blablabla
 func aboutMaps() {
+	fmt.Println("\n *** \n -------------- maps ------------------\n *** \n")
 	printLineTrace()
 	// мапа - это ссылка на хеш таблицу
 	// ключи, как и значения должны иметь одинаковый тип данных
@@ -347,6 +351,107 @@ func aboutMaps() {
 	mm["cat_1"] = "meow_1"
 
 	printMapStringString(mm)
+
+}
+
+type CatInVacuum struct {
+	Name  string
+	Speed int
+}
+
+func (c CatInVacuum) Meow() {
+	printLineTrace()
+	fmt.Printf("I am %s, meow!\n", c.Name)
+}
+
+func (c CatInVacuum) Walk() {
+	printLineTrace()
+	fmt.Printf("My speed %d!\n", c.Speed)
+}
+
+func aboutInterfaces() {
+	fmt.Println("\n *** \n -------------- interfaces ------------------\n *** \n")
+	printLineTrace()
+	// интерфейс - абстрактный тип, который определяет поведение
+	// в отличие от конкретного типа, который определяет данные
+	// интерфейсы могут встраиваться друг в друга при этом одновремнно удовлетворять
+	// тем реализациям, поведение которых полностью соответсвует методам ожидаемой реализации
+
+	// интерфейс, который описывает что-то мяукающее
+	type Meower interface {
+		Meow()
+	}
+
+	type Walker interface {
+		Walk()
+	}
+
+	// интерфейс, который состоит из двух абстракций:
+	// - нечто мяукающее
+	// - нечто ходящее
+	type Cat interface {
+		Meower
+		Walker
+	}
+
+	letWalk := func(c Walker) {
+		c.Walk()
+	}
+
+	letMeow := func(c Meower) {
+		c.Meow()
+	}
+
+	// опишем тип, который удовлетворит двум интерфейсам (см реализацию CatInVacuum)
+	var cInV = CatInVacuum{
+		Name:  "CatInVacuum",
+		Speed: 55,
+	}
+
+	// т.к. тип имеет поведение Meow(), мы можем его передать в те ф-ции, которые
+	// имеют в своей сигнатуре Meower
+	letMeow(cInV)
+	// тоже самое касается Walk(). Мы можем передать переменную в ф-цию, которая ожидает
+	// Walker
+	letWalk(cInV)
+
+	printLineTrace()
+	// нулевое значение интерфейса - nil
+	var w io.Writer
+	fmt.Println(w)
+
+	printLineTrace()
+	// в своей концепции интерфейс состоит из дескриптора типа
+	// и самого значения этого типа
+	// называются они динамический тип  и динамическое значение типа
+
+	// зареберем это:
+	// объявим нулевой интерфейс типа io.Writter
+
+	//  на этом этапе тип и значение будут равны nil
+	// Вызов метода нулевого интерфейса приводит к панике
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Println(r)
+				fmt.Println("recovered from the panic that was caused by calling the nil-interface method")
+			}
+		}()
+
+		w.Write([]byte("hello"))
+	}()
+
+	// именно в этом месте присовим уже проинциализированную реализацию io.Writer
+	w = os.Stdout
+	// это преобразование включает в себя неявное преобразование из конкретного типа
+	// в тип интерфейса, как будто это выглядит io.Writer(os.Stdout)
+	// в данном случае, динмический тип переменной становится
+	// равным дескриптору типа указателя *os.File, а динамесческое значение хранит копию os.Stdout
+	// которое является уже самим указателем на некую переменную типа os.File
+	// т.е. еще раз : динамический тип хранит сам ДЕСКРИПТОР ТИПА указателя на os.File - т.е. некую абстрактную дичь, которая определяет сам тип
+	// а динамическое значение хранит уже саму ПЕРЕМЕННУЮ указателя на os.File
+
+
 
 }
 
