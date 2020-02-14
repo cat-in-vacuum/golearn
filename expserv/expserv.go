@@ -2,13 +2,17 @@ package expserv
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/cat-in-vacuum/golearn/expclient"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"
 	"io/ioutil"
 	"net/http"
+	"net/http/pprof"
+	_ "net/http/pprof"
 	"os"
 	"path"
+	"time"
 )
 
 var stopSrvChan = make(chan struct{})
@@ -28,12 +32,26 @@ func startHTTP() {
 		log.Debug().Msg("app has been stopped")
 		os.Exit(1)
 	}()
-
 	srv := mux.NewRouter()
+
+
+	srv.HandleFunc("/debug/pprof/", pprof.Index)
+	srv.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+	srv.HandleFunc("/debug/pprof/profile", pprof.Profile)
+	srv.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+	srv.HandleFunc("/debug/pprof/trace", pprof.Trace)
+
+	srv.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
+	srv.Handle("/debug/pprof/heap", pprof.Handler("heap"))
+	srv.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
+	srv.Handle("/debug/pprof/block", pprof.Handler("block"))
+
 	srv.Handle("/", rootHandler())
 	srv.Handle("/test", handleTest()).Methods(http.MethodGet)
 	srv.Handle("/test/off", handleTestServerOff()).Methods(http.MethodGet)
 	srv.Handle("/test/post/{[0-9]+}", getPosts(client)).Methods(http.MethodGet)
+
+
 	log.Fatal().Err(http.ListenAndServe(":8080", srv))
 }
 
@@ -59,6 +77,7 @@ func rootHandler() http.HandlerFunc {
 
 func getPosts(client *expclient.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+
 		id := path.Base(r.URL.Path)
 
 		resp, err := client.GetPosts(id)
@@ -81,4 +100,18 @@ func handleTestServerOff() http.HandlerFunc {
 		w.Write([]byte(`{"status": "shutting down..."}`))
 		stopSrvChan <- struct{}{}
 	}
+}
+
+func EmulateOne() {
+	time.Sleep(time.Second*1)
+	fmt.Println("EmulateOne")
+}
+
+func EmulateTwo() {
+	time.Sleep(time.Second*1)
+	fmt.Println("EmulateTwo")
+}
+
+func EmulateThree() {
+
 }

@@ -47,7 +47,9 @@ func Run() {
 	// Про мапы
 	// aboutMaps()
 
-	aboutInterfaces()
+	aboutFunc()
+
+	// aboutInterfaces()
 
 	// Параллельность и всовместно используемые переменные
 	//aboutMutex()
@@ -359,7 +361,7 @@ type CatInVacuum struct {
 	Speed int
 }
 
-func aboutFuncAndGoroutines() {
+func aboutFunc() {
 	printLineTrace()
 	// функции ялвяются значениями первого класса:
 	// т.е. функция может иметь тип, может быть присвоенна в переменную
@@ -412,7 +414,50 @@ func aboutFuncAndGoroutines() {
 	fmt.Println(counter())
 	fmt.Println(counter())
 	fmt.Println(counter())
-	// todo захват перменных
+
+
+	// ЗАХВАТ ПЕРЕМЕННЫХ ИТЕРАЦИИ
+	printLineTrace()
+	var intSlice = []int{1, 2, 3, 4, 5}
+	var pointerSlice = make([]*int, 0)
+
+	// вторая переменная, которую возвращает range - является как-бы итеративным указателем
+	// на переменную, который переиспользуется на каждой итерации цикла. Т.е добавляя на каждой
+	// итерации цикла item в pointerSlice на самом деле добавляется ОДНА И ТАЖЕ переменная, которая является
+	// указателем на значение, которое хранится на момент итерации в item.
+	// Т.е. получается, что на последней итерации внутри item будет 5, и , т.к. все значения
+	// pointerSlice это указатель на одну пеменную item, при выводе значений получается, что
+	// все значения равны значению на последней итерации цикла.
+
+	// КОРОТКО: range вторым аргументом возвращает переиспользуемый на каждой итерации указатель,
+	// по этому в нашем примере добавляя именно сам указатель, получается что все элементы pointerSlice
+	// хранят ссылку на одну переменную.
+
+	for _, item := range intSlice {
+		pointerSlice = append(pointerSlice, &item)
+	}
+
+	for _, item := range pointerSlice {
+		fmt.Println(*item)
+	}
+
+	printLineTrace()
+	// как этого избегать?
+	// очистим слайс
+	pointerSlice = make([]*int, 0)
+	for _, item := range intSlice {
+		// внутри, цикл создает свою область видимости (лексический блок)
+		// все значения, созданные циклом захватывают и совместно используют одну перменную
+		// адресумое место в памяти
+
+		// просто сохраним значение второй переменной range в новую перемнную
+		value := item
+		// и уже после будем добавлять ссылку на него в новый слайс
+		pointerSlice = append(pointerSlice, &value)
+	}
+	for _, item := range pointerSlice {
+		fmt.Println(*item)
+	}
 }
 
 type Location struct {
