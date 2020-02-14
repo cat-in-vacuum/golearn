@@ -1,0 +1,1 @@
+curl http://localhost:8080/debug/pprof/trace?seconds=8 --output trace.out
