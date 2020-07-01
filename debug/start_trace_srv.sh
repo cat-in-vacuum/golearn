@@ -1,0 +1,1 @@
+go tool -trace -http "127.0.0.0:8081" /home/uer/go_builds/expsrv trace.out
