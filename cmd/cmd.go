@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/cat-in-vacuum/golearn/examples"
-	"github.com/cat-in-vacuum/golearn/expserv"
 )
 
 var isTraceEnabled = true
@@ -12,7 +11,7 @@ type T struct {
 }
 
 func main() {
-	expserv.Run()
+	// expserv.Run()
 
 	/*go func() {
 		time.Sleep(time.Second * 1)
