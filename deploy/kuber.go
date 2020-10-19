@@ -101,6 +101,9 @@ package deploy
 // - в поде может быть несколько контейнеров, могут использовать доступные порты (через локалхост)
 //   взаимодействие между подами по ип
 // - контейнеры в подах совместно используют тома хранилищ данных, ип адрес, номера порыгвтов, пространство имен IPC
+// -----------------------------------------------------------------------------------------------------------------
+// - ПО СУТИ, POD В ТЕРМИНОЛОГИИ KUBERNETES - ЭТО НАБОР КОНТЕЙНЕРОВ, ОБЪЕДИНЕННЫХ МЕЖДУ СОБОЙ ОБЩИМ LINUX NAMESPACE
+// -----------------------------------------------------------------------------------------------------------------
 
 // немного о пространстве имен при IPC ( межПРОЦЕССное взаимодействие)
 // https://ru.wikipedia.org/wiki/%D0%9F%D1%80%D0%BE%D1%81%D1%82%D1%80%D0%B0%D0%BD%D1%81%D1%82%D0%B2%D0%BE_%D0%B8%D0%BC%D1%91%D0%BD_(Linux)
@@ -134,6 +137,15 @@ spec:                        - объект описывает нужное со
 // minikube start
 // kubectl get nodes
 // kubectl create -f {{pod_manifest_filename}}.yaml
+// вместо create лучше использовать apply, т.к. create создает новый кластер, но если он создан вернет ошибку
+// apply если кластер сущетсвует просто перезапустит существующий с новыми параметрами
+// edit позволяет редактировать параметры кластера в реальном времени
+
+// удалить под по имени
+// kubectl delete pod {{pod-name}}
+
+// удалить все поды
+// kubectl delete pod --all
 
 // если возникают ошибки при запуске, например нечто типа failed to ssh connection
 // стоит проверить, как установлен докер
@@ -146,3 +158,36 @@ spec:                        - объект описывает нужное со
 // и сделать в точности как здесь
 // https://phoenixnap.com/kb/install-minikube-on-ubuntu
 // угрохал, бля, часа 4 что бы поставить на убунту
+
+// https://serveradmin.ru/nastroyka-kubernetes/#_Ingress
+// ReplicaSet следит за кол-вом подов по шаблону
+// испоьзуется для отказоустойчивости кластера
+// можно указать кол-во нуженых реплик подов
+// если один из них упадет, то ReplicaSet подымет новый, даже если удалить вручную под
+
+// Deployment управляет наборами ReplicaSet
+/* apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deployment-nginx
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-nginx
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: my-nginx
+    spec:
+      containers:
+      - image: nginx:1.16
+        name: nginx
+        ports:
+        - containerPort: 80*/
+
