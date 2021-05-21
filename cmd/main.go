@@ -1,8 +1,7 @@
 package main
 
 import (
-	"github.com/cat-in-vacuum/golearn/examples"
-	"github.com/cat-in-vacuum/golearn/expserv"
+	"github.com/cat-in-vacuum/golearn/algoritms"
 )
 
 var isTraceEnabled = true
@@ -12,23 +11,12 @@ type T struct {
 }
 
 func main() {
-	expserv.Run()
 
-	/*go func() {
-		time.Sleep(time.Second * 1)
-		conn, err := net.Dial("tcp", "localhost:8080")
-		if err != nil {
-			log.Err(err).Err(err).Msg("conn failure")
 
-		} else {
-			log.Debug().Err(err).Msg("conn failure")
-			conn.Write([]byte("ok"))
-		}
-	}()*/
-
+	algoritms.Run()
+	//expserv.Run()
 	//expserv.Run()
 
 	// go examples.Run()
-	examples.Run()
+	//examples.Run()
 }
-

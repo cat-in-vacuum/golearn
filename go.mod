@@ -1,5 +1,7 @@
 module github.com/cat-in-vacuum/golearn
 
+go 1.15
+
 require (
 	github.com/golang/mock v1.3.1 // indirect
 	github.com/gorilla/mux v1.7.3
