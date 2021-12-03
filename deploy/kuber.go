@@ -134,7 +134,7 @@ spec:                        - объект описывает нужное со
 
 // создание пода:
 // для начала
-// minikube start
+// minikube start (локальный кубик)
 // kubectl get nodes
 // kubectl create -f {{pod_manifest_filename}}.yaml
 // вместо create лучше использовать apply, т.к. create создает новый кластер, но если он создан вернет ошибку

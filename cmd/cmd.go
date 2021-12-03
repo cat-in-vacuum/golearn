@@ -1,9 +1,7 @@
 package main
 
 import (
-	"github.com/cat-in-vacuum/golearn/algoritms"
-	"github.com/cat-in-vacuum/golearn/examples"
-	"github.com/cat-in-vacuum/golearn/expserv"
+	"github.com/cat-in-vacuum/golearn/klepman"
 )
 
 var isTraceEnabled = true
@@ -13,9 +11,11 @@ type T struct {
 }
 
 func main() {
-	expserv.Run()
-	examples.Run()
-	algoritms.Run()
+	klepman.Run()
+	//os.RunLock()
+	//expserv.Run()
+	//examples.Run()
+	//algoritms.Run()
 	/*go func() {
 		time.Sleep(time.Second * 1)
 		conn, err := net.Dial("tcp", "localhost:8080")

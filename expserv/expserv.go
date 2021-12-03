@@ -18,8 +18,8 @@ import (
 var stopSrvChan = make(chan struct{})
 
 func Run() {
-	startHTTP()
 
+	startHTTP()
 	log.Debug().Msg("test http  server has benn started")
 
 }
